@@ -1,3 +1,5 @@
+import random
+import numpy as np
 import pygame
 pygame.init()
 pygame.mixer.music.load('Dodgeball_sound_effect_(getmp3.pro).mp3')
@@ -21,11 +23,11 @@ class bb_game:
 
      def move(self,action):
          keys = pygame.key.get_pressed()
-         if action:
-             self.direction="Right"
+         if np.array_equal(action, [1, 0]):
+             self.direction="Left"
 
-         else :
-             self.direction = "Left"
+         elif np.array_equal(action, [0, 1]):
+             self.direction = "Right"
 
 
          if self.bar.right>=self.w:
@@ -34,15 +36,18 @@ class bb_game:
              self.plocx = self.plocx + 1
 
          if self.direction=="Left":
-             self.plocx-=0.5
+             self.plocx-=1
          if self.direction == "Right":
-             self.plocx+=0.5
+             self.plocx+=1.
 
      def reset(self):
+         self.alr=[10,750]
+         a=random.randint(0,1)
          self.direction="Right"
          self.plocx = 350
+         self.frames = 0
          self.plocy = 600
-         self.pongx = 100
+         self.pongx = self.alr[1]
          self.pongy = 100
          self.pdy = 1
          self.pdx = 1
@@ -56,10 +61,11 @@ class bb_game:
 
 
      def Pong(self):
-         self.pongy+=0.4 *self.pdy
-         self.pongx+=0.003*self.pdx
+         self.pongy+=1.8 *self.pdy
+         self.pongx+=0.007*self.pdx
          collx=0
-         if self.pong.colliderect(self.bar):
+
+         if self.bar.colliderect(self.pong):
              pygame.mixer.music.play(loops=0, start=0.2)
              collx=self.bar.centerx-self.pong.x
              self.pdx=-collx
@@ -76,6 +82,8 @@ class bb_game:
              self.display.blit(text, [self.h-450, self.w-600])
 
 
+
+
      def update(self):
             self.display.fill((0,0,0))
             self.bar = pygame.draw.rect(self.display, (0, 0, 255),
@@ -86,6 +94,7 @@ class bb_game:
             pygame.display.flip()
 
      def play_step(self,action):
+         self.frames+=1
          for event in pygame.event.get():
              if event.type == pygame.QUIT:
                  pygame.quit()
@@ -95,13 +104,16 @@ class bb_game:
          game_over=0
          if  self.pongy>self.h:
              game_over=1
-             reward=-10
+             reward=-20
              return reward,game_over
-         if self.pong.colliderect(self.bar):
-             reward=10
+         if self.bar.colliderect(self.pong):
+             reward=20
+
 
          self.update()
-         return reward , game_over
+
+         return reward, game_over
+
 
 
 
