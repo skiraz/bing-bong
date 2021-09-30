@@ -29,15 +29,24 @@ class bb_game:
 
 
 
-     def move(self,action):
+     def move(self,action,controlled):
          keys = pygame.key.get_pressed()
-         if np.array_equal(action, [1 ,0, 0]):
-             self.direction="Left"
-
-         elif np.array_equal(action, [0 ,0, 1]):
-             self.direction = "Right"
+         if controlled:
+             if keys[pygame.K_LEFT]:
+                 self.direction = "Left"
+             elif keys[pygame.K_RIGHT]:
+                 self.direction = "Right"
+             else:
+                 self.direction=" "
          else:
-             self.direction=" "
+
+            if np.array_equal(action, [1 ,0, 0]):
+                self.direction="Left"
+
+            elif np.array_equal(action, [0 ,0, 1]):
+                self.direction = "Right"
+            else:
+                self.direction=" "
 
 
          if self.bar.right>=self.w:
@@ -54,14 +63,16 @@ class bb_game:
          #print(self.direction)
 
      def reset(self):
+         self.seconds=0
          self.stopwatch1 = pygame.time.get_ticks()
          self.loopbounce=0
+         self.reward=0
          self.direction=" "
          self.Bounces = 0
          self.plocx = 350
          self.frames = 0
          self.plocy = 600
-         self.pongx =random.randint(10,self.w-10)
+         self.pongx=random.randint(10,self.w-10)
          self.pongy = 100
          self.pdy = 1
          self.pdx = 1
@@ -132,26 +143,28 @@ class bb_game:
             self.Pong()
             pygame.display.flip()
 
-     def play_step(self,action):
+     def play_step(self,action,epsilon):
+         self.update()
          self.frames+=1
          for event in pygame.event.get():
              if event.type == pygame.QUIT:
                  pygame.quit()
                  quit()
-         self.move(action)
+         self.move(action,epsilon)
 
-         reward=0
          game_over=0
          if  self.pongy>=self.h:
              game_over=1
-             reward=-90
-             return reward,game_over
-         if  self.bar.left+10 <=self.pongx<=self.bar.right-10:
-             reward=10
+             self.reward-=10
+             return self.reward,game_over
+         if  self.bar.left <= self.pongx<=self.bar.right:
+             self.reward+=0.1
 
 
-         if self.bar.colliderect(self.pong):
-             reward=30
+
+
+         # if self.bar.colliderect(self.pong):
+         #     reward=10
 
 
          # loop check :
@@ -172,11 +185,10 @@ class bb_game:
 
 
 
-         self.update()
 
 
 
-         return reward, game_over
+         return self.reward, game_over
 
 
 

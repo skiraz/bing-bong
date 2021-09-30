@@ -6,16 +6,15 @@ import os
 
 
 class Linear_QNet(nn.Module):
-    def __init__(self, input_size, hidden_size1,hidden_size2, output_size):
+    def __init__(self, input_size, hidden_size1, output_size):
         super().__init__()
         self.linear1 = nn.Linear(input_size, hidden_size1)
-        self.linear2 = nn.Linear( hidden_size1,hidden_size2)
-        self.linear3 = nn.Linear(hidden_size2, output_size)
+        self.linear2 = nn.Linear( hidden_size1,output_size)
+        #self.linear3 = nn.Linear(hidden_size2, output_size)
 
     def forward(self, x):
         x = F.relu(self.linear1(x))
-        x = F.relu(self.linear2(x))
-        x=self.linear3(x)
+        x=self.linear2(x)
 
         return x
 
@@ -39,25 +38,17 @@ class QTrainer:
 
     def train_step(self, state, action, reward, next_state, done):
         state = torch.tensor(state, dtype=torch.float)
-        state=state.to("cuda")
         next_state = torch.tensor(next_state, dtype=torch.float)
-        next_state = next_state.to("cuda")
         action = torch.tensor(action, dtype=torch.int)
-        action=action.to("cuda")
         reward = torch.tensor(reward, dtype=torch.float)
-        reward=reward.to("cuda")
         # (n, x)
 
         if len(state.shape) == 1:
             # (1, x)
             state = torch.unsqueeze(state, 0)
-            state = state.to("cuda")
             next_state = torch.unsqueeze(next_state, 0)
-            next_state = next_state.to("cuda")
             action = torch.unsqueeze(action, 0)
-            action = action.to("cuda")
             reward = torch.unsqueeze(reward, 0)
-            reward = reward.to("cuda")
 
             done = (done,)
 
