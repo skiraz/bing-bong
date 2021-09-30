@@ -15,9 +15,8 @@ class Linear_QNet(nn.Module):
     def forward(self, x):
         x = F.relu(self.linear1(x))
         x = F.relu(self.linear2(x))
-        x = F.relu(self.linear3(x))
+        x=self.linear3(x)
 
-        x = F.softmax(x)
         return x
 
     def save(self, file_name='model.pth'):
@@ -40,17 +39,26 @@ class QTrainer:
 
     def train_step(self, state, action, reward, next_state, done):
         state = torch.tensor(state, dtype=torch.float)
+        state=state.to("cuda")
         next_state = torch.tensor(next_state, dtype=torch.float)
+        next_state = next_state.to("cuda")
         action = torch.tensor(action, dtype=torch.int)
+        action=action.to("cuda")
         reward = torch.tensor(reward, dtype=torch.float)
+        reward=reward.to("cuda")
         # (n, x)
 
         if len(state.shape) == 1:
             # (1, x)
             state = torch.unsqueeze(state, 0)
+            state = state.to("cuda")
             next_state = torch.unsqueeze(next_state, 0)
+            next_state = next_state.to("cuda")
             action = torch.unsqueeze(action, 0)
+            action = action.to("cuda")
             reward = torch.unsqueeze(reward, 0)
+            reward = reward.to("cuda")
+
             done = (done,)
 
         # 1: predicted Q values with current state
@@ -72,3 +80,8 @@ class QTrainer:
         loss.backward()
 
         self.optimizer.step()
+
+# mymodel = Linear_QNet(6, 128,128, 3)
+# mymodel.load_state_dict(torch.load(r"model/1.pth"))
+# mymodel.eval()
+

@@ -3,7 +3,8 @@ import random
 import numpy as np
 from collections import deque
 from main import bb_game
-from model import Linear_QNet, QTrainer
+from model import Linear_QNet, QTrainer#, mymodel
+
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
@@ -17,16 +18,25 @@ class Agent:
         self.epsilon = 0  # randomness
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
-        self.model = Linear_QNet(5,16,16,2)
+        self.model = Linear_QNet(8,128,128,3)
+        self.model.to("cuda")
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game):
+        hit_left=game.hit_left()
         state = [
             game.bar.centerx,
             game.pong.centerx,
             game.pong.centery,
             game.direction == "Left",
-            game.direction == "Right"]
+            game.direction == "Right",
+            game.direction == " ",
+            hit_left,
+            not hit_left
+
+
+
+        ]
 
         return np.array(state, dtype=int)
 
@@ -49,16 +59,19 @@ class Agent:
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
-        self.epsilon = 80 - self.n_games
-        final_move=[0,0]
-        if random.randint(0, 200) < self.epsilon:
-            move = random.randint(0, 1)
-            final_move[move] = 1
-        else:
-            state0 = torch.tensor(state, dtype=torch.float)
-            prediction = self.model(state0)
-            move = torch.argmax(prediction).item()
-            final_move[move] = 1
+        #self.epsilon = 80 - self.n_games
+        final_move=[0,0,0]
+        # if random.randint(0, 200) < self.epsilon:
+        #     move = random.randint(0, 2)
+        #     final_move[move] = 1
+        # else:
+        state0 = torch.tensor(state, dtype=torch.float)
+        state0=state0.to("cuda")
+        prediction = self.model(state0)
+        move = torch.argmax(prediction).item()
+        print(prediction)
+        final_move[move] = 1
+
 
 
         return final_move
@@ -68,6 +81,22 @@ def train():
     agent = Agent()
     game = bb_game()
     while True:
+        old_state_dict = {}
+        for key in agent.model.state_dict():
+            old_state_dict[key] = agent.model.state_dict()[key].clone()
+
+        # Your training procedure
+        ...
+
+        # Save new params
+        new_state_dict = {}
+        for key in agent.model.state_dict():
+            new_state_dict[key] = agent.model.state_dict()[key].clone()
+
+        # Compare params
+        for key in old_state_dict:
+            if not (old_state_dict[key] == new_state_dict[key]).all():
+                print('Diff in {}'.format(key))
 
         # get old state
         state_old = agent.get_state(game)
